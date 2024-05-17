@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            font-family:'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        table, th, td {
+            border: 0px solid black;
+            border-collapse: collapse;
+            text-align: center;
+            padding: 10px;
+            text-transform: capitalize;
+        }
+        tr:nth-child(even) {
+            background-color: #d8e9f8;
+        }
+        #backBtn {
+            height: 50px;
+            padding: 10px;
+            color: white;
+            background-color: green;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        tr:hover {
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="window.location.href='index.html'" id="backBtn"> < Back</button>
+    <h1>All Farms</h1>
+    <p id="ifEmpty"></p>
+
+    <table id="farmDetailsTable">
+    </table>
+
+    <script>
+        window.onload = function() {
+            populateList();
+        };
+
+        function resetTable() {
+            document.getElementById('farmDetailsTable').innerHTML = `
+                    <tr>
+                        <th>Farm ID</th>
+                        <th>Farm Name</th>
+                        <th>Items Sold</th>
+                        <th>Longitude</th>
+                        <th>Latitude</th>
+                        <th>Date Created</th>
+                        <th>Actions</th>
+                    </tr>
+                `;
+        }
+
+        function populateList() {
+            resetTable();
+            fetch('/api/products/')
+                .then(response => response.json())
+                .then(products => {
+                    if (products.length > 0) {
+                        for (let i = 0; i < products.length; i++) {
+                            const rowNode = document.createElement('tr');
+                            const nameColNode = document.createElement('td');
+                            nameColNode.innerHTML = products[i]['name'];
+                            const itemsColNode = document.createElement('td');
+                            itemsColNode.innerHTML = products[i]['items'].length;
+                            itemsColNode.title = products[i]['items'];
+                            itemsColNode.style.cursor = "pointer";
+                            const longColNode = document.createElement('td');
+                            longColNode.innerHTML = products[i]['longitude'];
+                            const latColNode = document.createElement('td');
+                            latColNode.innerHTML = products[i]['latitude'];
+                            const farmIDColNode = document.createElement('td');
+                            farmIDColNode.innerHTML = products[i]['_id'];
+                            const actionColNode = document.createElement('td');
+                            const deleteBtnNode = document.createElement('button');
+                            deleteBtnNode.innerHTML = "Delete";
+                            deleteBtnNode.onclick = function() {
+                                deleteItem(products[i]['_id']);
+                            }
+                            const updateBtnNode = document.createElement('button');
+                            updateBtnNode.innerHTML = "Update";
+                            updateBtnNode.style.marginLeft = "5px";
+                            updateBtnNode.onclick = function() {
+                                window.location.href= "updateItem.html?id=" + products[i]['_id'];
+                            }
+                            const createdAtColNode = document.createElement('td');
+                            createdAtColNode.innerHTML = products[i]['createdAt'];
+                            actionColNode.append(deleteBtnNode, updateBtnNode);
+                            rowNode.append(farmIDColNode, nameColNode, itemsColNode, longColNode, latColNode, createdAtColNode, actionColNode);
+                            document.getElementById('farmDetailsTable').appendChild(rowNode);
+                        }
+                    } else {
+                        document.getElementById('ifEmpty').innerHTML = "No items saved.";
+                    }
+                });
+        }
+
+        function deleteItem(id) {
+            let text = "Are you sure you want to delete this item?";
+            if (confirm(text) == true) {
+                fetch('/api/products/' + id, {
+                    method: 'DELETE',
+                })
+                .then(() => {
+                    populateList();
+                });
+            }
+        }
+    </script>
+</body>
+</html>

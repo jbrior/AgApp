@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+    </style>
+</head>
+<body>
+    <h1>All Products</h1>
+    <p id="ifEmpty"></p>
+    <ol id="myList">
+
+    </ol>
+    <form onsubmit="event.preventDefault(); addItem();">
+        <input type="text" id="itemName" required placeholder="item name"><br>
+        <input type="text" id="itemQuantity" required placeholder="item quantity"><br>
+        <input type="text" id="itemPrice" required placeholder="item price"><br>
+        <button>Add new product</button><br><br>
+    </form>
+    
+    <input type="text" id="itemID" placeholder="enter item id">
+    <button onclick="getItemDetails()">Get Item Details</button><br>
+    <p id="itemDetails"></p>
+    <script>
+        window.onload = function() {
+            populateList();
+        };
+
+        function populateList() {
+            document.getElementById("myList").innerHTML = "";
+            fetch('/api/products/')
+                .then(response => response.json())
+                .then(products => {
+                    if (products.length > 0) {
+                        document.getElementById('ifEmpty').innerHTML = "";
+                        for (let i = 0; i < products.length; i++) {
+                            const node = document.createElement("li");
+                            const textNode = document.createTextNode(products[i]["name"]);
+                            const deleteBtnNode = document.createElement("button");
+                            deleteBtnNode.innerHTML = "DELETE";
+                            deleteBtnNode.onclick = function() {
+                                deleteItem(products[i]["_id"]);
+                            };
+                            const idBtnNode = document.createElement("button");
+                            idBtnNode.innerHTML = "Show ID";
+                            idBtnNode.onclick = function() {
+                                const idTextNode = document.createTextNode(products[i]["_id"]);
+                                idBtnNode.style.display = "none";
+                                node.appendChild(idTextNode);
+                            };
+                            node.appendChild(textNode);
+                            node.appendChild(deleteBtnNode);
+                            node.appendChild(idBtnNode);
+                            document.getElementById("myList").appendChild(node);
+                        }
+                    } else {
+                        document.getElementById('ifEmpty').innerHTML = "No items saved.";
+                    }
+                });
+        }
+
+        function addItem() {
+            const itemName = document.getElementById('itemName').value;
+            const itemQuantity = document.getElementById('itemQuantity').value;
+            const itemPrice = document.getElementById('itemPrice').value;
+            const item = {
+                "name": itemName,
+                "quantity": itemQuantity,
+                "price": itemPrice
+            }
+            fetch('/api/products/', {
+                method: 'POST',
+                headers: {
+                    'Content-type': 'application/json; charset=UTF-8'
+                },
+                body: JSON.stringify(item)
+            })
+            .then(response => response.json())
+            .then(() => {
+                populateList();
+            });
+        }
+
+        function deleteItem(id) {
+            fetch('/api/products/' + id, {
+                method: 'DELETE',
+            })
+            .then(() => {
+                populateList();
+            });
+        }
+
+        function getItemDetails() {
+            const itemID = document.getElementById('itemID').value;
+            if (itemID != "" || itemID) {
+                console.log(itemID);
+            } else {
+                document.getElementById('itemDetails').innerHTML = "No ID entered";
+                return;
+            }
+
+            fetch('/api/products/' + itemID)
+                .then(response => response.json())
+                .then(product => {
+                    const quantity = product["quantity"];
+                    const name = product["name"];
+                    const price = product["price"];
+                    document.getElementById('itemDetails').innerHTML = "Name: " + name + "<br>Quantity: " + quantity + "<br>Price: $" + price;
+                });
+        }
+    </script>
+</body>
+</html>
